@@ -14,5 +14,7 @@ eggs/
 /log
 /outlog
 
+php/vendor
+
 /build/lib/adsb_helpers/build/
 

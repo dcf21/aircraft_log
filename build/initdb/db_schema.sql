@@ -1,4 +1,21 @@
-CREATE TABLE squitters
+
+# Image display formats
+CREATE TABLE adsb_img_formats (
+  uid    INTEGER PRIMARY KEY AUTO_INCREMENT,
+  name   TEXT     NOT NULL,
+  width  SMALLINT NOT NULL,
+  height SMALLINT NOT NULL
+);
+
+# Create table of constants
+CREATE TABLE adsb_constants (
+  uid   INTEGER PRIMARY KEY AUTO_INCREMENT,
+  name  VARCHAR(32) UNIQUE NOT NULL,
+  value TEXT
+);
+
+# Aircraft squitters
+CREATE TABLE adsb_squitters
 (
     message_type        VARCHAR(3),
     transmission_type   TINYINT,
@@ -28,5 +45,4 @@ CREATE TABLE squitters
     INDEX(hex_ident, callsign, generated_timestamp),
     INDEX(hex_ident, callsign, logged_timestamp),
     INDEX(hex_ident, callsign, parsed_timestamp)
-
 );

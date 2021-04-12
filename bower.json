@@ -1,0 +1,35 @@
+{
+  "name": "photogallery",
+  "version": "1.0.0",
+  "authors": [
+    "Dominic Ford <dcf21-git@dcford.org.uk>"
+  ],
+  "license": "MIT",
+  "homepage": "http://photos.dcford.org.uk",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "data/html/vendor",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "ExplorerCanvas": "excanvas#*",
+    "bootstrap": "4.0.0-alpha.2",
+    "html5shiv": "~3.7.3",
+    "jquery": "~1.11.3",
+    "jquery-ui": "~1.11.4",
+    "kendo-ui-core": "~2015.1.515",
+    "knockout": "~3.3.0",
+    "knockout-kendo": "~0.9.5",
+    "knockout-projections": "~1.1.0",
+    "marker-with-label": "google-marker-with-label#*",
+    "requirejs": "~2.1.20",
+    "font-awesome": "fontawesome#^4.6.1",
+    "tether": "^1.4.1"
+  },
+  "resolutions": {
+    "knockout": "~3.3.0"
+  }
+}

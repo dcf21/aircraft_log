@@ -1,0 +1,22 @@
+// Remove page furniture
+.noprint           { display: none !important; }
+.blkprint          { color: black !important; }
+.banner_buttons1 a { color: #202020 !important; }
+.banner_buttons2 a { color: #303030 !important; }
+.banner_buttons1   { border-top   : 1px solid black !important; }
+.banner_buttons2   { border-bottom: 1px solid black !important; }
+
+// Print breadcrumb in legible type
+a.chevron      { color: #303030 !important; }
+span.postchevron:after { content: "&#187;"; color: #303030; }
+span.mainbar   { color: #303030 !important; }
+span.mainbar a { color: #303030 !important; }
+
+// Print scrolling tables in their entirity
+div.scrolltable { display: block !important; position: static !important; overflow: visible !important; }
+div.scrolltable_thead { display: none !important; }
+div.scrolltable_tbody thead { display: table-header-group !important; }
+div.scrolltable_tbody { height: auto !important; overflow: visible !important; }
+
+// Don't print links
+a:link:after, a:visited:after { content: "" !important; }

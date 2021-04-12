@@ -1,0 +1,40 @@
+<data>
+    <constants>
+        <constant>
+            <name>copyright</name>
+            <value>2021-2021</value>
+        </constant>
+        <constant>
+            <name>server</name>
+            <value>https://adsb.local/</value>
+        </constant>
+        <constant>
+            <name>sitename</name>
+            <value>ADS-B database</value>
+        </constant>
+        <constant>
+            <name>lastUpdate</name>
+            <value>0</value>
+        </constant>
+    </constants>
+    <imgFormats>
+        <format>
+            <name>icon</name>
+            <xsize>252</xsize>
+            <ysize>189</ysize>
+            <comment>news.php</comment>
+        </format>
+        <format>
+            <name>fullwidth</name>
+            <xsize>800</xsize>
+            <ysize>600</ysize>
+            <comment>index.php</comment>
+        </format>
+        <format>
+            <name>halfwidth</name>
+            <xsize>400</xsize>
+            <ysize>300</ysize>
+            <comment>astrophoto</comment>
+        </format>
+    </imgFormats>
+</data>

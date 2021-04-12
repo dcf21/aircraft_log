@@ -26,6 +26,12 @@ echo "[`date`] Initialising databases" | tee -a log
 cd build/initdb
 python main_initdb.py 2>> ../../log
 
+# Generate website
+cd ${cwd}
+echo "[`date`] Making HTML" | tee -a log
+cd build/makehtml
+python main_makehtml.py 2>> ../../log
+
 # Generate SQL dump
 cd ${cwd}
 echo "[`date`] Making sql dump" | tee -a log
