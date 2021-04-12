@@ -1,0 +1,21 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+cwd=`pwd`
+
+# Sometimes this line is necessary, if your locale settings are broken
+export LC_ALL=C
+
+# Create virtual environment
+rm -Rf auto/virtualenv
+virtualenv -p python3 auto/virtualenv
+source auto/virtualenv/bin/activate
+
+# Install required python libraries
+pip install mysqlclient
+
+# Install custom python libraries
+cd ${cwd}
+cd build/lib/adsb_helpers
+python setup.py install
+

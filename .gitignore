@@ -1,0 +1,18 @@
+.idea
+
+# Distribution / packaging
+develop-eggs/
+dist/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+*.pyc
+
+# /
+/auto
+/log
+/outlog
+
+/build/lib/adsb_helpers/build/
+

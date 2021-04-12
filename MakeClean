@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+
+# Remove old log files
+rm -f log outlog
+
+# Wipe everything
+rm -Rf auto
