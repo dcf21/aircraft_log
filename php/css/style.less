@@ -4,6 +4,16 @@ img { border-width: 0; }
 a { color:#33a; text-decoration: None; }
 a:hover { text-decoration: underline; }
 
+// CSC colours
+@dark_purple: #932386;
+@medium_purple: #ed028c;
+@light_purple: #f4a3c8;
+@light_blue: #c9e8e6;
+@medium_blue: #78cdd2;
+@dark_blue: #62b7cd;
+@vdark_blue: @dark_blue * 0.8;
+@dark_red: #c42034;
+
 a.disabled { color: #aaa; }
 a.disabled:hover { text-decoration: none; cursor: auto; }
 
@@ -254,22 +264,6 @@ div.scrolltable_thead table { border-bottom: 0; }
 div.pager { font-size: 18px; text-align:center; }
 div.pager span.page { display: inline-block; padding: 0 8px; }
 
-// Table of bright satellite passes
-table.sattable       { text-align:center; font-size:12px; border-left: 1px solid #888; border-collapse:collapse; margin-left:auto; margin-right:auto; }
-table.sattable td                 { border-left: 1px solid #888; border-right: 1px solid #888; padding: 2px 5px; }
-table.sattable td:nth-child(   3),
-table.sattable td:nth-child(   7),
-table.sattable td:nth-child(  11),
-table.sattable td:nth-child(  15),
-table.sattable tr:nth-child(1) td:nth-child(4), table.sattable tr:nth-child(1) td:nth-child(5), table.sattable tr:nth-child(1) td:nth-child(6) { border-left: 3px solid #888; }
-table.sattable tr:nth-child( odd) { background-color: #eee; }
-table.sattable tr:nth-child(   1) { font-weight: bold; background-color: white; border-top: 1px solid #888; }
-table.sattable tr:nth-child(   2) { font-weight: bold; background-color: white; border-bottom: 1px solid #888; }
-table.sattable tr:last-child      { border-bottom: 1px solid #888; }
-
-.satinfobox { vertical-align:top; max-width:180px; padding-right:20px; }
-.satpassesdraught { background-color:#e8e8e8; text-align:center; font-weight:bold; font-size:15px; padding:6px; }
-
 p.paperlist { text-align: left; font-size: 16px; padding: 6px 0; max-width: 550px; margin: 0; }
 ul.baalist { max-width: 530px; margin: 2px; font-size: 14px; }
 dt.paperlist { text-align: left; font-size: 16px; }
@@ -323,17 +317,6 @@ div.newsbody ol li { margin: 14px 0; }
 
 h5 { font-size: 24px; font-weight: normal; color: #888; margin: 25px 0 12px 0; }
 
-table.planetinfo   { font-size: 14px; }
-table.planetinfo   td:nth-child(1) { font-size: 22px; }
-table.planetinfo   table td { width:auto !important; padding: 0 5px !important; }
-table.planetevents td { font-size: 16px !important; }
-table.risesetinfo  { margin: 0 auto; text-align: right; }
-table.risesetinfo  td:nth-child(1) { color: #888; }
-table.risesetinfo  td:nth-child(3) { color: #888; }
-
-table.whatsup4     { font-size: 14px; }
-table.whatsup4     td { padding: 0 3px; }
-
 td.pi  { text-align:left; font-size:small; padding-right:12px }
 td.pih { text-align:left; font-size:small; padding-right:12px;padding-top:8px; }
 p.pid  { margin-top:2px; margin-bottom:2px; text-align:right; font-size:xx-small; }
@@ -366,41 +349,6 @@ p.pid  { margin-top:2px; margin-bottom:2px; text-align:right; font-size:xx-small
 .its-img-leftB { width: 25px;height: 25px;background-position:-160px  -60px;cursor:pointer;}
 .its-img-rightB{ width: 25px;height: 25px;background-position:-181px  -60px;cursor:pointer;}
 
-// Formatting of digital clock displays
-.its-clkH { .position_relative; width:160px; height:90px; background:#000000; color: #00f000; padding:0; white-space:nowrap; overflow: hidden; font-weight:bold; border: 2px solid #aaa; z-index:100; }
-.its-clkA { position:absolute; left:3px; top:3px; width:154px; height:40px; padding:3px; text-align: left; }
-.its-clkTZ{ display:inline-block; vertical-align:top; font-size:12px; margin: 3px 0 0 8px; }
-.its-clkB { position:absolute; left:0; top:45px;width:160px; text-align:center; font-size:13px; }
-.its-clk1 { width:23px; height:40px; background-position:   0 -185px; border:1px; }
-.its-clk2 { width:23px; height:40px; background-position: -23px -185px; border:1px; }
-.its-clk3 { width:23px; height:40px; background-position: -46px -185px; border:1px; }
-.its-clk4 { width:23px; height:40px; background-position: -67px -185px; border:1px; }
-.its-clk5 { width:23px; height:40px; background-position: -90px -185px; border:1px; }
-.its-clk6 { width:23px; height:40px; background-position:-112px -185px; border:1px; }
-.its-clk7 { width:23px; height:40px; background-position:-135px -185px; border:1px; }
-.its-clk8 { width:23px; height:40px; background-position:-157px -185px; border:1px; }
-.its-clk9 { width:23px; height:40px; background-position:-180px -185px; border:1px; }
-.its-clk0 { width:23px; height:40px; background-position:-202px -185px; border:1px; }
-.its-clkX { width:23px; height:40px; background-position:-225px -185px; border:1px; }
-.its-clkC { width: 8px; height:40px; background-position:-250px -185px; border:1px; }
-
-// Formatting of related content boxes
-.seealso                  { float:right; padding:8px; background-color: #f0f0f0; border-radius: 2px; font-size: 14px; min-width: 170px; }
-.seealso div:nth-child(1) { display:block; padding: 3px 0; font-size:16px; color:#777; margin-bottom:4px; border-bottom: 1px solid #ccc; }
-.seealso_partner { overflow: hidden; padding-right: 30px; }
-
-// Floating control-panel icons
-.overlay_collapsing_panel_ctrl
-{
-  position:absolute; bottom:30px; left:8px; z-index:310;
-  .overlay_collapsing_panel_button { display: inline-block; margin:4px; opacity: 0.7;}
-  .overlay_collapsing_panel_button button { background-color:black; color:#ccc; padding: 4px 10px; }
-}
-
-.overlay_collapsing_panel { display: none; z-index:320; position:absolute; bottom:78px; left:18px; padding: 10px; background-color:rgba(230,230,230,0.82); border-radius: 4px; color:#444; }
-
-table.control_panel td { padding:1px 4px; }
-
 .img_prev { float: left; padding: 12px; font-weight: bold; font-size: 16px; }
 .img_next { float: right; padding: 12px; font-weight: bold; font-size: 16px; }
 
@@ -422,3 +370,14 @@ table.metadata td:nth-child(1) { font-weight: bold; font-size: 15px; }
 .bottom-right-link { position:absolute;bottom:0;right:0; z-index:200; padding: 5px 12px; font-weight:bold; font-size: 14px; background:rgba(0,0,0,0.7); border-radius: 10px 0 0 0; }
 .bottom-right-link a { color: #44d; }
 
+
+// Calendar
+table.dcf_calendar { width: 840px; border-collapse: separate; border-spacing:3px; table-layout:fixed; margin:0 auto; }
+table.dcf_calendar thead { font-weight: bold; font-size:18px; text-align:center; background-color: @light_blue; }
+table.dcf_calendar td { border-width: 1px; padding: 5px; border-style: dotted; border-color: #c0c0c0; vertical-align: top; }
+table.dcf_calendar div.cal_day { font-size:26px; margin: 3px; }
+table.dcf_calendar div.cal_body { text-align:center; margin: 10px 3px; }
+table.dcf_calendar span.cal_number { display:block; font-size:22px; font-weight: bold; color: @dark_purple; }
+table.dcf_calendar span.cal_type { display:block; font-size:14px; padding-bottom: 4px; color: @dark_purple; }
+table.dcf_calendar td.odd { background-color: @light_blue; }
+table.dcf_calendar td.even { background-color: white; }

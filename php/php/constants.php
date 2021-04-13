@@ -8,11 +8,13 @@ class constants
 {
     public $sitename;
     public $server;
-    public $server_json;
     public $copyright;
     public $lastUpdate;
     public $path;
-    public $rsyear, $rsmc, $rsday;
+    public $yearMin, $yearMax;
+    public $obs_earliest, $obs_latest;
+    public $obs_earliest_date, $obs_latest_date;
+    public $obs_earliest_date_short, $obs_latest_date_short;
 
     public function __construct()
     {
@@ -55,6 +57,32 @@ class constants
         $stmt->execute([]);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($result as $item) $this->{$item['name']} = $item['value'];
+
+        // Get time range of data
+        $this->obs_earliest = 1618317941;
+        $this->obs_latest = time();
+        $stmt = $this->db->prepare("
+SELECT MIN(generated_timestamp) AS t_min, MAX(generated_timestamp) AS t_max
+FROM adsb_squitters;");
+        $stmt->execute([]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (count($result)) {
+            if ($result[0]['t_min'] > 0) {
+                $this->obs_earliest = $result[0]['t_min'];
+            }
+
+            if ($result[0]['t_max'] > 0) {
+                $this->obs_latest = $result[0]['t_max'];
+            }
+        }
+        $this->yearMin = date("Y", $this->obs_earliest);
+        $this->yearMax = date("Y", $this->obs_latest);
+
+        $this->obs_earliest_date = date("d M Y - H:i", $this->obs_earliest);
+        $this->obs_earliest_date_short = date("d M Y", $this->obs_earliest);
+
+        $this->obs_latest_date = date("d M Y - H:i", $this->obs_latest);
+        $this->obs_latest_date_short = date("d M Y", $this->obs_latest);
     }
 }
 
