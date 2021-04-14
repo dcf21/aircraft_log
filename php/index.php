@@ -64,7 +64,7 @@ WHERE s.generated_timestamp BETWEEN :x AND :y;");
         $items = $stmt->fetchAll()[0]['result_count'];
         if ($items > 0) {
             $text = "<div style='height:55px;'>" .
-                "<a href='{$url}?year1={$year}&month1={$month}&day1={$count}'>" .
+                "<a href='{$url}?year={$year}&month={$month}&day={$count}'>" .
                 "<span class='cal_number'>{$items}</span><span class='cal_type'>{$suffix}</span></a></div>";
         } else {
             $text = "";

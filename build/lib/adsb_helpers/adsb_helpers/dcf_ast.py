@@ -3,7 +3,7 @@
 
 # Various astronomical helper functions
 
-from math import floor, fmod, pi, sin, cos, tan
+from math import floor, fmod, sqrt, pi, sin, cos, tan, asin
 
 # The day of the year on which each month begins
 month_day = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 999]
@@ -439,3 +439,29 @@ def ra_dec_b1950_from_j2000(ra0, dec0):
         List of [RA, Dec] in hours and degrees, B1950
     """
     return ra_dec_from_j2000(ra0, dec0, -631158660)
+
+
+def ang_dist(ra0, dec0, ra1, dec1):
+    """
+    Calculate the angular distance between two points on the sky
+
+    :param ra0:
+        The right ascension of the first point (radians)
+    :param dec0:
+        The declination of the first point (radians)
+    :param ra1:
+        The right ascension of the second point (radians)
+    :param dec1:
+        The declination of the second point (radians)
+    :return:
+        The angular separation (radians)
+    """
+
+    x0 = cos(ra0) * cos(dec0)
+    y0 = sin(ra0) * cos(dec0)
+    z0 = sin(dec0)
+    x1 = cos(ra1) * cos(dec1)
+    y1 = sin(ra1) * cos(dec1)
+    z1 = sin(dec1)
+    d = sqrt(pow(x0 - x1, 2) + pow(y0 - y1, 2) + pow(z0 - z1, 2))
+    return 2 * asin(d / 2)

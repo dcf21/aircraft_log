@@ -1,17 +1,18 @@
-
 # Image display formats
-CREATE TABLE adsb_img_formats (
-  uid    INTEGER PRIMARY KEY AUTO_INCREMENT,
-  name   TEXT     NOT NULL,
-  width  SMALLINT NOT NULL,
-  height SMALLINT NOT NULL
+CREATE TABLE adsb_img_formats
+(
+    uid    INTEGER PRIMARY KEY AUTO_INCREMENT,
+    name   TEXT     NOT NULL,
+    width  SMALLINT NOT NULL,
+    height SMALLINT NOT NULL
 );
 
 # Create table of constants
-CREATE TABLE adsb_constants (
-  uid   INTEGER PRIMARY KEY AUTO_INCREMENT,
-  name  VARCHAR(32) UNIQUE NOT NULL,
-  value TEXT
+CREATE TABLE adsb_constants
+(
+    uid   INTEGER PRIMARY KEY AUTO_INCREMENT,
+    name  VARCHAR(32) UNIQUE NOT NULL,
+    value TEXT
 );
 
 # Aircraft squitters
@@ -25,7 +26,7 @@ CREATE TABLE adsb_squitters
     flight_id           MEDIUMINT,
     generated_timestamp REAL,
     logged_timestamp    REAL,
-    callsign            VARCHAR(8),
+    call_sign           VARCHAR(8),
     altitude            INT,
     ground_speed        INT,
     track               INT,
@@ -39,10 +40,10 @@ CREATE TABLE adsb_squitters
     is_on_ground        TINYINT,
     parsed_timestamp    REAL,
 
-    INDEX(generated_timestamp),
-    INDEX(logged_timestamp),
-    INDEX(parsed_timestamp),
-    INDEX(hex_ident, callsign, generated_timestamp),
-    INDEX(hex_ident, callsign, logged_timestamp),
-    INDEX(hex_ident, callsign, parsed_timestamp)
+    INDEX (generated_timestamp),
+    INDEX (logged_timestamp),
+    INDEX (parsed_timestamp),
+    INDEX (hex_ident, call_sign, generated_timestamp),
+    INDEX (hex_ident, call_sign, logged_timestamp),
+    INDEX (hex_ident, call_sign, parsed_timestamp)
 );

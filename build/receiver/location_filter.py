@@ -2,7 +2,10 @@
 # location_filter.py
 
 import time
-from math import atan2
+from math import atan2, pi
+
+from adsb_helpers import dcf_ast
+
 
 class LocationFilter:
     """
@@ -16,7 +19,7 @@ class LocationFilter:
         # Grace period within which to follow aircraft which have passed through the filtered area
         self.grace_period = 300
 
-    def is_in_range(self, id:str, lat:float, lon:float):
+    def is_in_range(self, id: str, lat: float, lon: float):
         """
         Test whether a supplied geographic position lies within the filtered region.
 
@@ -44,7 +47,7 @@ class LocationFilter:
 
         return True
 
-    def test_point(self, lat:float, lon:float):
+    def test_point(self, lat: float, lon: float):
         """
         Test whether a supplied geographic position lies within the filtered region.
 
@@ -57,6 +60,7 @@ class LocationFilter:
         """
 
         raise NotImplementedError("The test_point method must be implemented separately in a child class")
+
 
 class LocationFilter_Cambridge(LocationFilter):
     """
@@ -85,7 +89,7 @@ class LocationFilter_Cambridge(LocationFilter):
         # Call parent constructor
         super(LocationFilter_Cambridge, self).__init__()
 
-    def test_point(self, lat:float, lon:float):
+    def test_point(self, lat: float, lon: float):
         """
         Test whether a supplied geographic position lies within the filtered region.
 
@@ -96,3 +100,14 @@ class LocationFilter_Cambridge(LocationFilter):
         :return:
             bool
         """
+
+        deg = pi / 180
+
+        angular_distance = dcf_ast.ang_dist(ra0=self.search_central_lon * deg,
+                                            dec0=self.search_central_lat * deg,
+                                            ra1=lon * deg,
+                                            dec1=lat * deg)
+
+        is_within_range = angular_distance < self.search_angle
+
+        return is_within_range

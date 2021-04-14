@@ -1,5 +1,6 @@
 #!../../auto/virtualenv/bin/python3
 # encoding: utf-8
+# receiver.py
 
 import socket
 import logging
@@ -9,23 +10,48 @@ import time
 
 from adsb_helpers.connect_db import connect_db
 from adsb_helpers import dcf_ast
+from location_filter import LocationFilter_Cambridge
 
 # Defaults
-HOST = "localhost"
-PORT = 30003
-BUFFER_SIZE = 100
-CONNECT_ATTEMPT_LIMIT = 10
-CONNECT_ATTEMPT_DELAY = 5.0
+HOST = "localhost"  # Hostname of dump1090 server
+PORT = 30003  # Port that dump1090 is running on
+BUFFER_SIZE = 100  # Size of buffer to store squitter stream data in
+CONNECT_ATTEMPT_LIMIT = 10  # Number of times to attempt to reconnect
+CONNECT_ATTEMPT_DELAY = 5.0  # Delay between reconnection attempts
 
 
-def connect_to_socket(loc, port):
+def connect_to_socket(host: str = "localhost", port: int = 30003):
+    """
+    Connect to socket serving dump1090 stream of squitters.
+
+    :param host:
+        Hostname of dump1090 server
+    :param port:
+        Port that dump1090 is running on
+    :return:
+        Stream connection
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((loc, port))
+    s.connect((host, port))
     return s
 
 
-# open a socket connection
-def open_socket(host, port, connect_attempt_limit, connect_attempt_delay):
+def open_socket(host: str = "localhost", port: int = 30003,
+                connect_attempt_limit: int = 10, connect_attempt_delay: float = 5.0):
+    """
+    Try to open a socket connection, with retries in the event of failure.
+
+    :param host:
+        Hostname of dump1090 server
+    :param port:
+        Port that dump1090 is running on
+    :param connect_attempt_limit:
+        Number of times to attempt to reconnect
+    :param connect_attempt_delay:
+        Delay between reconnection attempts
+    :return:
+        Stream connection
+    """
     s = None
     count_failed_connection_attempts = 0
     while count_failed_connection_attempts < connect_attempt_limit:
@@ -47,7 +73,17 @@ def open_socket(host, port, connect_attempt_limit, connect_attempt_delay):
 
     return s
 
+
 def parse_date_time(date_str, time_str):
+    """
+    Parse date/time strings in the format "yyyy/mm/dd" and "HH:mm:ss.sss" into a unix timestamp
+    :param date_str:
+        Date string in the format "yyyy/mm/dd"
+    :param time_str:
+        Time string in the format "HH:mm:ss.sss"
+    :return:
+        Unix timestamp
+    """
     try:
         year = int(date_str[0:4])
         month = int(date_str[5:7])
@@ -59,9 +95,143 @@ def parse_date_time(date_str, time_str):
         logging.warning("Could not parse date/time <{}> <{}>".format(date_str, time_str))
         return None
 
+    # Convert date components into a Julian day number
     jd = dcf_ast.julian_day(year=year, month=month, day=day, hour=hour, minute=minute, sec=seconds)
+
+    # Convert to unix timestamp
     utc = dcf_ast.unix_from_jd(jd=jd)
     return utc
+
+
+def listen_for_squitters(host: str = "localhost", port: int = 30003,
+                         buffer_size: int = 100,
+                         connect_attempt_limit: int = 10, connect_attempt_delay: float = 5.0):
+    """
+    Listen for squitters, and store them in the database.
+
+    :param host:
+        Hostname of dump1090 server
+    :param port:
+        Port that dump1090 is running on
+    :param buffer_size:
+        Size of buffer to store squitter stream data in
+    :param connect_attempt_limit:
+        Number of times to attempt to reconnect
+    :param connect_attempt_delay:
+        Delay between reconnection attempts
+    :return:
+        Stream connection
+    """
+    # Count how many squitter we have processed
+    count_total = 0
+
+    # Connect to database
+    [db, c] = connect_db()
+
+    # Connect to dump1090 output stream
+    s = open_socket(host=host, port=port,
+                    connect_attempt_limit=connect_attempt_limit,
+                    connect_attempt_delay=connect_attempt_delay)
+
+    # Instantiate location filter
+    location_filter = LocationFilter_Cambridge()
+
+    # Buffer for storing squitter data
+    data_str = ""
+
+    try:
+
+        # Loop until an exception
+        while True:
+            # Receive a stream message
+            message = ""
+            try:
+                message = s.recv(buffer_size).decode("utf-8")
+                logging.info(message)
+                data_str += message.strip("\n")
+            except socket.error:
+                # This happens if there is no connection and is dealt with below
+                pass
+
+            # If we didn't get a stream message, reconnect
+            if len(message) == 0:
+                logging.info("No broadcast received. Attempting to reconnect")
+                time.sleep(connect_attempt_delay)
+                s.close()
+                s = open_socket(host=host, port=port,
+                                connect_attempt_limit=connect_attempt_limit,
+                                connect_attempt_delay=connect_attempt_delay)
+                continue
+
+            # It is possible that more than one line has been received,
+            # so split it then loop through the parts and validate
+
+            data = data_str.split("\n")
+            for d in data:
+                line = d.split(",")
+
+                # If the line has 22 items, it's valid
+                if len(line) == 22:
+                    # Extract components of the line
+                    message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id, \
+                    generated_date, generated_time, logged_date, logged_time, call_sign, altitude, \
+                    ground_speed, track, lat, lon, vertical_rate, \
+                    squawk, alert, emergency, spi, is_on_ground = line
+
+                    # Get current time
+                    parse_time = time.time()
+                    generated_timestamp = None
+                    logged_timestamp = None
+
+                    # check if aircraft is within search region
+                    aircraft_id = "{}/{}".format(call_sign, hex_ident)
+                    is_ok = location_filter.is_in_range(id=aircraft_id, lat=lat, lon=lon)
+
+                    # Extract timestamps from strings
+                    if is_ok:
+                        generated_timestamp = parse_date_time(generated_date, generated_time)
+                        logged_timestamp = parse_date_time(logged_date, logged_time)
+
+                        # Check entry is ok
+                        is_ok = generated_timestamp is not None and logged_timestamp is not None
+
+                    # Add the row to the db
+                    if is_ok:
+                        c.execute("""
+INSERT INTO adsb_squitters
+ (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id,
+  generated_timestamp, logged_timestamp, call_sign, altitude,
+  ground_speed, track, lat, lon, vertical_rate, squawk, alert, emergency, spi, is_on_ground, parsed_timestamp
+ ) VALUES (%s, %s, %s, %s, %s, %s,
+           %s, %s, %s, %s,
+           %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+                                  (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id,
+                                   generated_timestamp, logged_timestamp, call_sign, altitude,
+                                   ground_speed, track, lat, lon, vertical_rate, squawk, alert, emergency, spi,
+                                   is_on_ground, parse_time)
+                                  )
+
+                        # Increment squitter count
+                        count_total += 1
+
+                        # Commit the new row to the database
+                        c.commit()
+
+                    # Since everything was valid, we reset the stream message
+                    data_str = ""
+                else:
+                    # The stream message is too short, so prepend it to the next stream message
+                    data_str = d
+                    continue
+
+    except KeyboardInterrupt:
+        # Clean up neatly on keyboard interrupt
+        logging.info("Closing connection")
+        s.close()
+        c.commit()
+        c.close()
+        logging.info("{:d} squitters added to your database".format(count_total))
+
 
 def main():
     # Set up logging
@@ -92,105 +262,15 @@ def main():
         help="The number of seconds to wait after a failed connection attempt. "
              "Defaults to {}".format(CONNECT_ATTEMPT_DELAY))
 
-    # parse command line options
+    # Parse command line options
     args = parser.parse_args()
 
-    # print args.accumulate(args.in)
-    count_total = 0
+    # Listen for dump1090 output
+    listen_for_squitters(host=args.host, port=args.port,
+                         connect_attempt_delay=args.connect_attempt_delay,
+                         connect_attempt_limit=args.connect_attempt_limit)
 
-    # connect to database
-    [db, c] = connect_db()
 
-    s = open_socket(host=args.host, port=args.port,
-                    connect_attempt_limit=args.connect_attempt_limit,
-                    connect_attempt_delay=args.connect_attempt_delay)
-
-    data_str = ""
-
-    try:
-
-        # loop until an exception
-        while True:
-            # get current time
-            parse_time = time.time()
-
-            # receive a stream message
-            message = ""
-            try:
-                message = s.recv(args.buffer_size).decode("utf-8")
-                logging.info(message)
-                data_str += message.strip("\n")
-            except socket.error:
-                # this happens if there is no connection and is delt with below
-                pass
-
-            if len(message) == 0:
-                logging.info("No broadcast received. Attempting to reconnect")
-                time.sleep(args.connect_attempt_delay)
-                s.close()
-                s = open_socket(host=args.host, port=args.port,
-                                connect_attempt_limit=args.connect_attempt_limit,
-                                connect_attempt_delay=args.connect_attempt_delay)
-                continue
-
-            # it is possible that more than one line has been received
-            # so split it then loop through the parts and validate
-
-            data = data_str.split("\n")
-            for d in data:
-                line = d.split(",")
-
-                # if the line has 22 items, it's valid
-                if len(line) == 22:
-                    # extract components
-                    message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id, \
-  generated_date, generated_time, logged_date, logged_time, callsign, altitude, \
-  ground_speed, track, lat, lon, vertical_rate, \
-                    squawk, alert, emergency, spi, is_on_ground = line
-
-                    # check if aircraft is within search region
-                    is_ok = location_filter.is_in_range(lat, lon)
-
-                    # extract timestamps
-                    if is_ok:
-                        generated_timestamp = parse_date_time(generated_date, generated_time)
-                        logged_timestamp = parse_date_time(logged_date, logged_time)
-
-                        # check entry is ok
-                        is_ok = generated_timestamp is not None and logged_timestamp is not None
-
-                    # add the row to the db
-                    if is_ok:
-                        c.execute("""
-INSERT INTO adsb_squitters
- (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id,
-  generated_timestamp, logged_timestamp, callsign, altitude,
-  ground_speed, track, lat, lon, vertical_rate, squawk, alert, emergency, spi, is_on_ground, parsed_timestamp
- ) VALUES (%s, %s, %s, %s, %s, %s,
-           %s, %s, %s, %s,
-           %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-                              (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id)
-                              )
-
-                        # increment counts
-                        count_total += 1
-
-                        # commit the new rows to the database in batches
-                        c.commit()
-
-                    # since everything was valid we reset the stream message
-                    data_str = ""
-                else:
-                    # the stream message is too short, prepend to the next stream message
-                    data_str = d
-                    continue
-
-    except KeyboardInterrupt:
-        logging.info("Closing connection")
-        s.close()
-        c.commit()
-        c.close()
-        logging.info("{:d} squitters added to your database".format(count_total))
-
-        if __name__ == "__main__":
-            main()
+# If invoked from the command line, start listening now
+if __name__ == "__main__":
+    main()
