@@ -129,15 +129,15 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
     [db, c] = connect_db()
 
     # Connect to dump1090 output stream
-    s = open_socket(host=host, port=port,
-                    connect_attempt_limit=connect_attempt_limit,
-                    connect_attempt_delay=connect_attempt_delay)
+    input_socket = open_socket(host=host, port=port,
+                               connect_attempt_limit=connect_attempt_limit,
+                               connect_attempt_delay=connect_attempt_delay)
 
     # Instantiate location filter
     location_filter = LocationFilter_Cambridge()
 
     # Buffer for storing squitter data
-    data_str = ""
+    text_buffer = ""
 
     try:
 
@@ -146,9 +146,9 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
             # Receive a stream message
             message = ""
             try:
-                message = s.recv(buffer_size).decode("utf-8")
+                message = input_socket.recv(buffer_size).decode("utf-8")
                 logging.info(message)
-                data_str += message.strip("\n")
+                text_buffer += message.strip("\n")
             except socket.error:
                 # This happens if there is no connection and is dealt with below
                 pass
@@ -157,47 +157,69 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
             if len(message) == 0:
                 logging.info("No broadcast received. Attempting to reconnect")
                 time.sleep(connect_attempt_delay)
-                s.close()
-                s = open_socket(host=host, port=port,
-                                connect_attempt_limit=connect_attempt_limit,
-                                connect_attempt_delay=connect_attempt_delay)
+                input_socket.close()
+                input_socket = open_socket(host=host, port=port,
+                                           connect_attempt_limit=connect_attempt_limit,
+                                           connect_attempt_delay=connect_attempt_delay)
                 continue
 
             # It is possible that more than one line has been received,
             # so split it then loop through the parts and validate
-
-            data = data_str.split("\n")
-            for d in data:
-                line = d.split(",")
+            squitters = text_buffer.split("\n")
+            text_buffer = ""
+            for squitter in squitters:
+                columns = squitter.split(",")
 
                 # If the line has 22 items, it's valid
-                if len(line) == 22:
+                if len(columns) == 22:
                     # Extract components of the line
-                    message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id, \
-                    generated_date, generated_time, logged_date, logged_time, call_sign, altitude, \
-                    ground_speed, track, lat, lon, vertical_rate, \
-                    squawk, alert, emergency, spi, is_on_ground = line
+                    try:
+                        message_type = columns[0]
+                        transmission_type = columns[1]
+                        session_id = int(columns[2]) if columns[2] else None
+                        aircraft_id = int(columns[3]) if columns[3] else None
+                        hex_ident = columns[4]
+                        flight_id = int(columns[5]) if columns[5] else None
+                        generated_date = columns[6]
+                        generated_time = columns[7]
+                        logged_date = columns[8]
+                        logged_time = columns[9]
+                        call_sign = columns[10]
+                        altitude = int(columns[11]) if columns[11] else None
+                        ground_speed = int(columns[12]) if columns[12] else None
+                        track = int(columns[13]) if columns[13] else None
+                        lat = float(columns[14]) if columns[14] else None
+                        lon = float(columns[15]) if columns[15] else None
+                        vertical_rate = float(columns[16]) if columns[16] else None
+                        squawk = int(columns[17]) if columns[17] else None
+                        alert = int(columns[18]) if columns[18] else None
+                        emergency = int(columns[19]) if columns[19] else None
+                        spi = int(columns[20]) if columns[20] else None
+                        is_on_ground = int(columns[21]) if columns[21] else None
+                    except ValueError:
+                        logging.warning("Error parsing line <{}>".format(squitter))
+                        continue
 
                     # Get current time
                     parse_time = time.time()
-                    generated_timestamp = None
-                    logged_timestamp = None
 
                     # check if aircraft is within search region
-                    aircraft_id = "{}/{}".format(call_sign, hex_ident)
-                    is_ok = location_filter.is_in_range(id=aircraft_id, lat=lat, lon=lon)
+                    aircraft_id_str = "{}/{}".format(call_sign, hex_ident)
+                    if not location_filter.is_in_range(id=aircraft_id_str, lat=lat, lon=lon):
+                        continue
 
                     # Extract timestamps from strings
-                    if is_ok:
-                        generated_timestamp = parse_date_time(generated_date, generated_time)
-                        logged_timestamp = parse_date_time(logged_date, logged_time)
+                    generated_timestamp = parse_date_time(generated_date, generated_time)
+                    logged_timestamp = parse_date_time(logged_date, logged_time)
 
-                        # Check entry is ok
-                        is_ok = generated_timestamp is not None and logged_timestamp is not None
+                    # Check entry is ok
+                    is_ok = generated_timestamp is not None and logged_timestamp is not None
+                    if not is_ok:
+                        logging.warning("Error parsing dates in line <{}>".format(squitter))
+                        continue
 
                     # Add the row to the db
-                    if is_ok:
-                        c.execute("""
+                    c.execute("""
 INSERT INTO adsb_squitters
  (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id,
   generated_timestamp, logged_timestamp, call_sign, altitude,
@@ -205,29 +227,26 @@ INSERT INTO adsb_squitters
  ) VALUES (%s, %s, %s, %s, %s, %s,
            %s, %s, %s, %s,
            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-                                  (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id,
-                                   generated_timestamp, logged_timestamp, call_sign, altitude,
-                                   ground_speed, track, lat, lon, vertical_rate, squawk, alert, emergency, spi,
-                                   is_on_ground, parse_time)
-                                  )
+                              (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id,
+                               generated_timestamp, logged_timestamp, call_sign, altitude,
+                               ground_speed, track, lat, lon, vertical_rate, squawk, alert, emergency, spi,
+                               is_on_ground, parse_time)
+                              )
 
-                        # Increment squitter count
-                        count_total += 1
+                    # Increment squitter count
+                    count_total += 1
 
-                        # Commit the new row to the database
-                        c.commit()
-
-                    # Since everything was valid, we reset the stream message
-                    data_str = ""
+                    # Commit the new row to the database
+                    c.commit()
                 else:
                     # The stream message is too short, so prepend it to the next stream message
-                    data_str = d
+                    text_buffer = squitter
                     continue
 
     except KeyboardInterrupt:
         # Clean up neatly on keyboard interrupt
         logging.info("Closing connection")
-        s.close()
+        input_socket.close()
         c.commit()
         c.close()
         logging.info("{:d} squitters added to your database".format(count_total))
