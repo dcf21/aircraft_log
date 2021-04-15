@@ -18,7 +18,7 @@ class LocationFilter:
         self.allowed_ids = {}
 
         # Grace period within which to follow aircraft which have passed through the filtered area
-        self.grace_period = 300
+        self.grace_period = 30
 
     def is_in_range(self, id: str, lat: float, lon: float):
         """
