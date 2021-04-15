@@ -199,6 +199,8 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
 
                 # If the line has 22 items, it's valid
                 if len(columns) == 22:
+                    # Remove any text from buffer which came before well-formed message text
+                    text_buffer = ""
 
                     # Extract components of the line
                     current_values = {}
@@ -372,7 +374,6 @@ INSERT INTO adsb_squitters
 
                     # Increment squitter count
                     count_committed += 1
-                    text_buffer = ""
                 else:
                     # The stream message is too short, so prepend it to the next stream message
                     text_buffer = squitter
