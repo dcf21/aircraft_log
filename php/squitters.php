@@ -32,6 +32,7 @@ $items = get_activity_history($tmin);
 $pageInfo = [
     "pageTitle" => "ADS-B database: Squitters on {$date_string}",
     "pageDescription" => "ADS-B database: Squitters on {$date_string}",
+    "fluid" => true,
     "activeTab" => "about",
     "teaserImg" => null,
     "cssextra" => null,
@@ -102,7 +103,7 @@ $pageTemplate->header($pageInfo);
                     <td><?php echo $item['emergency']; ?></td>
                     <td><?php echo $item['spi']; ?></td>
                     <td><?php echo $item['is_on_ground']; ?></td>
-                    <td><?php echo date("H:i:s", $item['parse_time']); ?></td>
+                    <td><?php echo date("H:i:s", $item['parsed_timestamp']); ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

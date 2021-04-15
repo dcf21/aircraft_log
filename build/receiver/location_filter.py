@@ -67,7 +67,7 @@ class LocationFilter_Cambridge(LocationFilter):
     A location filter which picks out aircraft within a circular area around Cambridge
     """
 
-    def __init__(self, radius=50, lat=52.222, lon=0.078):
+    def __init__(self, radius=100, lat=52.222, lon=0.078):
         """
         A location filter which picks out aircraft within a circular area around Cambridge
 

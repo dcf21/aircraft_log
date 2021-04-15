@@ -2,6 +2,10 @@
 # encoding: utf-8
 # receiver.py
 
+"""
+Receive squitter messages, and store them in a MySQL database.
+"""
+
 import socket
 import logging
 import argparse
@@ -124,6 +128,11 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
     """
     # Count how many squitter we have processed
     count_total = 0
+    count_committed = 0
+    last_report_time = time.time()
+    total_at_last_report = 0
+    committed_at_last_report = 0
+    report_interval = 10
 
     # Connect to database
     [db, c] = connect_db()
@@ -136,6 +145,10 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
     # Instantiate location filter
     location_filter = LocationFilter_Cambridge()
 
+    # Cached values by hex_ident
+    value_cache = {}
+    value_cache_grace_period = 600
+
     # Buffer for storing squitter data
     text_buffer = ""
 
@@ -143,11 +156,19 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
 
         # Loop until an exception
         while True:
+            # Consider producing a report message
+            if last_report_time < time.time() - report_interval:
+                message_rate_total = (count_total - total_at_last_report) / (time.time() - last_report_time)
+                message_rate_committed = (count_committed - committed_at_last_report) / (time.time() - last_report_time)
+                logging.info("Message rate per second: {:5.2f} {:5.2f}".format(message_rate_total, message_rate_committed))
+                last_report_time = time.time()
+                total_at_last_report = count_total
+                committed_at_last_report = count_committed
+
             # Receive a stream message
             message = ""
             try:
                 message = input_socket.recv(buffer_size).decode("utf-8")
-                logging.info(message)
                 text_buffer += message.strip("\n")
             except socket.error:
                 # This happens if there is no connection and is dealt with below
@@ -168,15 +189,30 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
             squitters = text_buffer.split("\n")
             text_buffer = ""
             for squitter in squitters:
-                columns = squitter.split(",")
+                columns = squitter.strip().split(",")
 
                 # If the line has 22 items, it's valid
                 if len(columns) == 22:
+                    # See if we have cached values for this hex_ident
+                    old_values = {}
+                    if hex_ident in value_cache:
+                        if value_cache[hex_ident]['time'] > time.time() - value_cache_grace_period:
+                            old_values = value_cache[hex_ident]
+
                     # Extract components of the line
                     try:
                         message_type = columns[0]
                         transmission_type = columns[1]
-                        session_id = int(columns[2]) if columns[2] else None
+
+                        if columns[2]:
+                            session_id = int(columns[2])
+                        else:
+                            session_id = old_values.get('session_id', None)
+
+                        if columns[3]:
+                            aircraft_id = int(columns[3])
+                        else:
+                            aircraft_id = old_values.get('aircraft_id', None)
                         aircraft_id = int(columns[3]) if columns[3] else None
                         hex_ident = columns[4]
                         flight_id = int(columns[5]) if columns[5] else None
@@ -197,8 +233,21 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                         spi = int(columns[20]) if columns[20] else None
                         is_on_ground = int(columns[21]) if columns[21] else None
                     except ValueError:
-                        logging.warning("Error parsing line <{}>".format(squitter))
+                        logging.warning("Error parsing line <{}>".format(squitter.strip()))
                         continue
+
+                    # Count messages parsed
+                    logging.info(squitter.strip())
+                    count_total += 1
+
+                    # Update database of call-signs
+                    if call_sign:
+                        call_signs[hex_ident] = {'call_sign': call_sign, 'time': time.time()}
+
+                    # Fill in call-sign if not supplied
+                    if not call_sign and hex_ident in call_signs:
+                        if call_signs[hex_ident]['time'] > time.time() - call_sign_grace_period:
+                            call_sign = call_signs[hex_ident]['call_sign']
 
                     # Get current time
                     parse_time = time.time()
@@ -219,6 +268,7 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                         continue
 
                     # Add the row to the db
+                    logging.info(message_type)
                     c.execute("""
 INSERT INTO adsb_squitters
  (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id,
@@ -234,10 +284,10 @@ INSERT INTO adsb_squitters
                               )
 
                     # Increment squitter count
-                    count_total += 1
+                    count_committed += 1
 
                     # Commit the new row to the database
-                    c.commit()
+                    db.commit()
                 else:
                     # The stream message is too short, so prepend it to the next stream message
                     text_buffer = squitter
@@ -247,8 +297,8 @@ INSERT INTO adsb_squitters
         # Clean up neatly on keyboard interrupt
         logging.info("Closing connection")
         input_socket.close()
-        c.commit()
-        c.close()
+        db.commit()
+        db.close()
         logging.info("{:d} squitters added to your database".format(count_total))
 
 
@@ -264,10 +314,10 @@ def main():
     # Set up command line options
     parser = argparse.ArgumentParser(description="Process dump1090 messages then insert them into a database")
     parser.add_argument(
-        "-h", "--host", type=str, default=HOST,
+        "--host", type=str, default=HOST,
         help="This is the network location of your dump1090 broadcast. Defaults to {}".format(HOST))
     parser.add_argument(
-        "-p", "--port", type=int, default=PORT,
+        "--port", type=int, default=PORT,
         help="The port broadcasting in SBS-1 BaseStation format. Defaults to {}".format(PORT))
     parser.add_argument(
         "--buffer-size", type=int, default=BUFFER_SIZE,
