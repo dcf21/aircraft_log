@@ -70,7 +70,7 @@ class LocationFilter_Cambridge(LocationFilter):
     A location filter which picks out aircraft within a circular area around Cambridge
     """
 
-    def __init__(self, radius=100, lat=52.222, lon=0.078):
+    def __init__(self, radius=50, lat=52.222, lon=0.078):
         """
         A location filter which picks out aircraft within a circular area around Cambridge
 
@@ -131,7 +131,7 @@ class LocationFilter_Cambridge(LocationFilter):
             self.sun_alt_az_time = time_now
 
         # Check whether Sun is below the horizon
-        if self.sun_alt_az[0] > 0:
+        if self.sun_alt_az[0] > -2:
             logging.info("Rejecting squitter as Sun is {:5.1f} deg above horizon.".format(self.sun_alt_az[0]))
             return False
 

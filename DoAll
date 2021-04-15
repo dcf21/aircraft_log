@@ -25,6 +25,7 @@ cd ${cwd}
 echo "[`date`] Initialising databases" | tee -a log
 cd build/initdb
 python main_initdb.py 2>> ../../log
+python makelive.py 2>> ../../log
 
 # Generate website
 cd ${cwd}

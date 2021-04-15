@@ -62,11 +62,11 @@ def open_socket(host: str = "localhost", port: int = 30003,
         try:
             s = connect_to_socket(host, port)
             count_failed_connection_attempts = 0
-            print("Connected to dump1090 broadcast")
+            logging.info("Connected to dump1090 broadcast")
             break
         except socket.error:
             count_failed_connection_attempts += 1
-            print(
+            logging.info(
                 "Cannot connect to dump1090 broadcast. Making attempt"
                 + str(count_failed_connection_attempts)
                 + "."
@@ -291,15 +291,15 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                         logging.warning("Error parsing line <{}>".format(squitter.strip()))
                         continue
 
-                    # Count messages parsed
-                    # logging.info(squitter.strip())
-                    count_total += 1
-
                     # Update database of cache values
                     value_cache[current_values['hex_ident']] = {
                         'cached': current_values,
                         'time': time.time()
                     }
+
+                    # Count messages parsed
+                    # logging.info(squitter.strip())
+                    count_total += 1
 
                     # Only proceed with messages if latitude and longitude were updated
                     if len(columns[14].strip()) == 0:
@@ -368,7 +368,8 @@ INSERT INTO adsb_squitters
         input_socket.close()
         db.commit()
         db.close()
-        logging.info("{:d} squitters added to your database".format(count_total))
+        logging.info("{:d} squitters parsed".format(count_total))
+        logging.info("{:d} squitters added to your database".format(count_committed))
 
 
 def main():
