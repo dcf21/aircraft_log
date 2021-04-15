@@ -132,7 +132,7 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
     last_report_time = time.time()
     total_at_last_report = 0
     committed_at_last_report = 0
-    report_interval = 10
+    report_interval = 30
 
     # Connect to database
     [db, c] = connect_db()
@@ -165,6 +165,10 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                 last_report_time = time.time()
                 total_at_last_report = count_total
                 committed_at_last_report = count_committed
+
+                # Touch database connection to prevent timeout
+                c.execute("SELECT 1 FROM adsb_squitters LIMIT 1;");
+                results = c.fetchall()
 
             # Receive a stream message
             message = ""
