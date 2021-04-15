@@ -1,7 +1,10 @@
 .idea
 
-# Log file
+# Log files
 *.log
+
+# Database archive
+/archive
 
 # Distribution / packaging
 develop-eggs/

@@ -9,7 +9,8 @@ Receive squitter messages, and store them in a MySQL database.
 import socket
 import logging
 import argparse
-import sys
+import traceback
+import MySQLdb
 import time
 
 from adsb_helpers.connect_db import connect_db
@@ -336,31 +337,36 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                         continue
 
                     # Add the row to the db
-                    c.execute("""
+                    mysql_fields = (current_values['message_type'], current_values['transmission_type'],
+                                    current_values['session_id'], current_values['aircraft_id'],
+                                    current_values['hex_ident'], current_values['flight_id'],
+                                    generated_timestamp, logged_timestamp,
+                                    current_values['call_sign'], current_values['altitude'],
+                                    current_values['ground_speed'], current_values['track'],
+                                    current_values['lat'], current_values['lon'], current_values['vertical_rate'],
+                                    current_values['squawk'], current_values['alert'], current_values['emergency'],
+                                    current_values['spi'],
+                                    current_values['is_on_ground'], parsed_timestamp)
+
+                    try:
+                        c.execute("""
 INSERT INTO adsb_squitters
  (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id,
   generated_timestamp, logged_timestamp, call_sign, altitude,
   ground_speed, track, lat, lon, vertical_rate, squawk, alert, emergency, spi, is_on_ground, parsed_timestamp
  ) VALUES (%s, %s, %s, %s, %s, %s,
            %s, %s, %s, %s,
-           %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-                              (current_values['message_type'], current_values['transmission_type'],
-                               current_values['session_id'], current_values['aircraft_id'],
-                               current_values['hex_ident'], current_values['flight_id'],
-                               generated_timestamp, logged_timestamp,
-                               current_values['call_sign'], current_values['altitude'],
-                               current_values['ground_speed'], current_values['track'],
-                               current_values['lat'], current_values['lon'], current_values['vertical_rate'],
-                               current_values['squawk'], current_values['alert'], current_values['emergency'],
-                               current_values['spi'],
-                               current_values['is_on_ground'], parsed_timestamp)
-                              )
+           %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""", mysql_fields)
+
+                        # Commit the new row to the database
+                        db.commit()
+                    except MySQLdb.DataError:
+                        logging.warning("Error inserting row: {}".format(str(mysql_fields)))
+                        logging.warning("Input line was: {}".format(squitter))
+                        logging.warning("Error message was: {}".format(str(traceback.format_exc())))
 
                     # Increment squitter count
                     count_committed += 1
-
-                    # Commit the new row to the database
-                    db.commit()
                 else:
                     # The stream message is too short, so prepend it to the next stream message
                     text_buffer = squitter
