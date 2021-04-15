@@ -2,9 +2,10 @@
 # location_filter.py
 
 import time
+import logging
 from math import atan2, pi
 
-from adsb_helpers import dcf_ast
+from adsb_helpers import dcf_ast, sunset_times
 
 
 class LocationFilter:
@@ -35,7 +36,7 @@ class LocationFilter:
         time_now = time.time()
 
         if lat is not None and lon is not None:
-            if self.test_point(lat=lat, lon=lon):
+            if self.test_point(id=id, lat=lat, lon=lon):
                 self.allowed_ids[id] = time_now
 
         if id not in self.allowed_ids:
@@ -47,10 +48,12 @@ class LocationFilter:
 
         return True
 
-    def test_point(self, lat: float, lon: float):
+    def test_point(self, id: str, lat: float, lon: float):
         """
         Test whether a supplied geographic position lies within the filtered region.
 
+        :param id:
+            An identification string for this aircraft
         :param lat:
             Latitude, degrees
         :param lon:
@@ -86,13 +89,19 @@ class LocationFilter_Cambridge(LocationFilter):
         self.search_radius = radius * 1e3  # metres
         self.search_angle = atan2(self.search_radius, self.radius_earth)  # radians
 
+        self.sun_position_grace_time = 30
+        self.sun_alt_az = [999, 999]
+        self.sun_alt_az_time = 0
+
         # Call parent constructor
         super(LocationFilter_Cambridge, self).__init__()
 
-    def test_point(self, lat: float, lon: float):
+    def test_point(self, id: str, lat: float, lon: float):
         """
         Test whether a supplied geographic position lies within the filtered region.
 
+        :param id:
+            An identification string for this aircraft
         :param lat:
             Latitude, degrees
         :param lon:
@@ -103,11 +112,31 @@ class LocationFilter_Cambridge(LocationFilter):
 
         deg = pi / 180
 
+        # Look up angular distance of plane across Earth's surface from observer
         angular_distance = dcf_ast.ang_dist(ra0=self.search_central_lon * deg,
                                             dec0=self.search_central_lat * deg,
                                             ra1=lon * deg,
                                             dec1=lat * deg)
+        physical_distance = angular_distance * self.radius_earth / 1e3 # km
 
+        # Is this within range?
         is_within_range = angular_distance < self.search_angle
 
-        return is_within_range
+        # Look up position of the Sun
+        time_now = time.time()
+        if self.sun_alt_az_time < time_now-self.sun_position_grace_time:
+            sun_pos = sunset_times.sun_pos(utc=time_now)
+            self.sun_alt_az = sunset_times.alt_az(ra=sun_pos[0], dec=sun_pos[1], utc=time_now,
+                                                  latitude=self.search_central_lat, longitude=self.search_central_lon)
+            self.sun_alt_az_time = time_now
+
+        # Check whether Sun is below the horizon
+        if self.sun_alt_az[0] > 0:
+            logging.info("Rejecting squitter as Sun is {:5.1f} deg above horizon.".format(self.sun_alt_az[0]))
+            return False
+
+        if not is_within_range:
+            logging.info("Rejecting <{}>; plane is {:5.1f} km away.".format(id, physical_distance))
+            return False
+
+        return True

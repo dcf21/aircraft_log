@@ -292,7 +292,7 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                         continue
 
                     # Count messages parsed
-                    logging.info(squitter.strip())
+                    # logging.info(squitter.strip())
                     count_total += 1
 
                     # Update database of cache values
@@ -332,7 +332,6 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                         continue
 
                     # Add the row to the db
-                    logging.info(current_values['message_type'])
                     c.execute("""
 INSERT INTO adsb_squitters
  (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id,
