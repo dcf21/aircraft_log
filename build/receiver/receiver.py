@@ -375,9 +375,12 @@ INSERT INTO adsb_squitters
 def main():
     # Set up logging
     logging.basicConfig(level=logging.INFO,
-                        stream=sys.stdout,
                         format='[%(asctime)s] %(levelname)s:%(filename)s:%(message)s',
-                        datefmt='%d/%m/%Y %H:%M:%S')
+                        datefmt='%d/%m/%Y %H:%M:%S',
+                        handlers=[
+                            logging.FileHandler("receiver.log"),
+                            logging.StreamHandler()
+                        ])
     logger = logging.getLogger(__name__)
     logger.info(__doc__.strip())
 

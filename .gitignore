@@ -1,5 +1,8 @@
 .idea
 
+# Log file
+*.log
+
 # Distribution / packaging
 develop-eggs/
 dist/
