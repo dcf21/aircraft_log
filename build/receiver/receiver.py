@@ -160,7 +160,8 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
             if last_report_time < time.time() - report_interval:
                 message_rate_total = (count_total - total_at_last_report) / (time.time() - last_report_time)
                 message_rate_committed = (count_committed - committed_at_last_report) / (time.time() - last_report_time)
-                logging.info("Message rate per second: {:5.2f} {:5.2f}".format(message_rate_total, message_rate_committed))
+                logging.info(
+                    "Message rate per second: {:5.2f} {:5.2f}".format(message_rate_total, message_rate_committed))
                 last_report_time = time.time()
                 total_at_last_report = count_total
                 committed_at_last_report = count_committed
@@ -193,45 +194,99 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
 
                 # If the line has 22 items, it's valid
                 if len(columns) == 22:
-                    # See if we have cached values for this hex_ident
-                    old_values = {}
-                    if hex_ident in value_cache:
-                        if value_cache[hex_ident]['time'] > time.time() - value_cache_grace_period:
-                            old_values = value_cache[hex_ident]
 
                     # Extract components of the line
+                    current_values = {}
                     try:
-                        message_type = columns[0]
-                        transmission_type = columns[1]
+                        current_values['message_type'] = columns[0]
+                        current_values['transmission_type'] = columns[1]
+                        current_values['hex_ident'] = columns[4]
+                        current_values['generated_date'] = columns[6]
+                        current_values['generated_time'] = columns[7]
+                        current_values['logged_date'] = columns[8]
+                        current_values['logged_time'] = columns[9]
+
+                        # See if we have cached values for this hex_ident
+                        old_values = {}
+                        cache_timeout = time.time() - value_cache_grace_period
+                        if current_values['hex_ident'] in value_cache:
+                            if value_cache[current_values['hex_ident']]['time'] > cache_timeout:
+                                old_values = value_cache[current_values['hex_ident']]['cached']
 
                         if columns[2]:
-                            session_id = int(columns[2])
+                            current_values['session_id'] = int(columns[2])
                         else:
-                            session_id = old_values.get('session_id', None)
+                            current_values['session_id'] = old_values.get('session_id', None)
 
                         if columns[3]:
-                            aircraft_id = int(columns[3])
+                            current_values['aircraft_id'] = int(columns[3])
                         else:
-                            aircraft_id = old_values.get('aircraft_id', None)
-                        aircraft_id = int(columns[3]) if columns[3] else None
-                        hex_ident = columns[4]
-                        flight_id = int(columns[5]) if columns[5] else None
-                        generated_date = columns[6]
-                        generated_time = columns[7]
-                        logged_date = columns[8]
-                        logged_time = columns[9]
-                        call_sign = columns[10]
-                        altitude = int(columns[11]) if columns[11] else None
-                        ground_speed = int(columns[12]) if columns[12] else None
-                        track = int(columns[13]) if columns[13] else None
-                        lat = float(columns[14]) if columns[14] else None
-                        lon = float(columns[15]) if columns[15] else None
-                        vertical_rate = float(columns[16]) if columns[16] else None
-                        squawk = int(columns[17]) if columns[17] else None
-                        alert = int(columns[18]) if columns[18] else None
-                        emergency = int(columns[19]) if columns[19] else None
-                        spi = int(columns[20]) if columns[20] else None
-                        is_on_ground = int(columns[21]) if columns[21] else None
+                            current_values['aircraft_id'] = old_values.get('aircraft_id', None)
+
+                        if columns[5]:
+                            current_values['flight_id'] = int(columns[5])
+                        else:
+                            current_values['flight_id'] = old_values.get('flight_id', None)
+
+                        if columns[10]:
+                            current_values['call_sign'] = columns[10]
+                        else:
+                            current_values['call_sign'] = old_values.get('call_sign', None)
+
+                        if columns[11]:
+                            current_values['altitude'] = int(columns[11])
+                        else:
+                            current_values['altitude'] = old_values.get('altitude', None)
+
+                        if columns[12]:
+                            current_values['ground_speed'] = int(columns[12])
+                        else:
+                            current_values['ground_speed'] = old_values.get('ground_speed', None)
+
+                        if columns[13]:
+                            current_values['track'] = int(columns[13])
+                        else:
+                            current_values['track'] = old_values.get('track', None)
+
+                        if columns[14]:
+                            current_values['lat'] = float(columns[14])
+                        else:
+                            current_values['lat'] = old_values.get('lat', None)
+
+                        if columns[15]:
+                            current_values['lon'] = float(columns[15])
+                        else:
+                            current_values['lon'] = old_values.get('lon', None)
+
+                        if columns[16]:
+                            current_values['vertical_rate'] = float(columns[16])
+                        else:
+                            current_values['vertical_rate'] = old_values.get('vertical_rate', None)
+
+                        if columns[17]:
+                            current_values['squawk'] = int(columns[17])
+                        else:
+                            current_values['squawk'] = old_values.get('squawk', None)
+
+                        if columns[18]:
+                            current_values['alert'] = int(columns[18])
+                        else:
+                            current_values['alert'] = old_values.get('alert', None)
+
+                        if columns[19]:
+                            current_values['emergency'] = int(columns[19])
+                        else:
+                            current_values['emergency'] = old_values.get('emergency', None)
+
+                        if columns[20]:
+                            current_values['spi'] = int(columns[20])
+                        else:
+                            current_values['spi'] = old_values.get('spi', None)
+
+                        if columns[21]:
+                            current_values['is_on_ground'] = int(columns[21])
+                        else:
+                            current_values['is_on_ground'] = old_values.get('is_on_ground', None)
                     except ValueError:
                         logging.warning("Error parsing line <{}>".format(squitter.strip()))
                         continue
@@ -240,26 +295,31 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                     logging.info(squitter.strip())
                     count_total += 1
 
-                    # Update database of call-signs
-                    if call_sign:
-                        call_signs[hex_ident] = {'call_sign': call_sign, 'time': time.time()}
+                    # Update database of cache values
+                    value_cache[current_values['hex_ident']] = {
+                        'cached': current_values,
+                        'time': time.time()
+                    }
 
-                    # Fill in call-sign if not supplied
-                    if not call_sign and hex_ident in call_signs:
-                        if call_signs[hex_ident]['time'] > time.time() - call_sign_grace_period:
-                            call_sign = call_signs[hex_ident]['call_sign']
+                    # Only proceed with messages if latitude and longitude were updated
+                    if len(columns[14].strip()) == 0:
+                        continue
 
                     # Get current time
                     parse_time = time.time()
 
                     # check if aircraft is within search region
-                    aircraft_id_str = "{}/{}".format(call_sign, hex_ident)
-                    if not location_filter.is_in_range(id=aircraft_id_str, lat=lat, lon=lon):
+                    aircraft_id_str = "{}/{}".format(current_values['call_sign'], current_values['hex_ident'])
+                    if not location_filter.is_in_range(id=aircraft_id_str,
+                                                       lat=current_values['lat'],
+                                                       lon=current_values['lon']):
                         continue
 
                     # Extract timestamps from strings
-                    generated_timestamp = parse_date_time(generated_date, generated_time)
-                    logged_timestamp = parse_date_time(logged_date, logged_time)
+                    generated_timestamp = parse_date_time(date_str=current_values['generated_date'],
+                                                          time_str=current_values['generated_time'])
+                    logged_timestamp = parse_date_time(date_str=current_values['logged_date'],
+                                                       time_str=current_values['logged_time'])
 
                     # Check entry is ok
                     is_ok = generated_timestamp is not None and logged_timestamp is not None
@@ -268,7 +328,7 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                         continue
 
                     # Add the row to the db
-                    logging.info(message_type)
+                    logging.info(current_values['message_type'])
                     c.execute("""
 INSERT INTO adsb_squitters
  (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id,
@@ -277,10 +337,16 @@ INSERT INTO adsb_squitters
  ) VALUES (%s, %s, %s, %s, %s, %s,
            %s, %s, %s, %s,
            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-                              (message_type, transmission_type, session_id, aircraft_id, hex_ident, flight_id,
-                               generated_timestamp, logged_timestamp, call_sign, altitude,
-                               ground_speed, track, lat, lon, vertical_rate, squawk, alert, emergency, spi,
-                               is_on_ground, parse_time)
+                              (current_values['message_type'], current_values['transmission_type'],
+                               current_values['session_id'], current_values['aircraft_id'],
+                               current_values['hex_ident'], current_values['flight_id'],
+                               current_values['generated_timestamp'], current_values['logged_timestamp'],
+                               current_values['call_sign'], current_values['altitude'],
+                               current_values['ground_speed'], current_values['track'],
+                               current_values['lat'], current_values['lon'], current_values['vertical_rate'],
+                               current_values['squawk'], current_values['alert'], current_values['emergency'],
+                               current_values['spi'],
+                               current_values['is_on_ground'], current_values['parse_time'])
                               )
 
                     # Increment squitter count
