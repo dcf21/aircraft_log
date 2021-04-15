@@ -78,7 +78,7 @@ $pageTemplate->header($pageInfo);
             <?php
             foreach ($items as $item):
                 $aircraft_url = "aircraft_squitters.php?" .
-                    "year={$tmin['year']}&month={$tmin['month']}&day={$tmin['day']}" .
+                    "year={$tmin['year']}&month={$tmin['mc']}&day={$tmin['day']}" .
                     "&call_sign=" . htmlentities($item['call_sign']) .
                     "&hex_ident=" . htmlentities($item['hex_ident']);
                 ?>

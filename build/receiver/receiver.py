@@ -198,13 +198,13 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                     # Extract components of the line
                     current_values = {}
                     try:
-                        current_values['message_type'] = columns[0]
-                        current_values['transmission_type'] = columns[1]
-                        current_values['hex_ident'] = columns[4]
-                        current_values['generated_date'] = columns[6]
-                        current_values['generated_time'] = columns[7]
-                        current_values['logged_date'] = columns[8]
-                        current_values['logged_time'] = columns[9]
+                        current_values['message_type'] = columns[0].strip()
+                        current_values['transmission_type'] = columns[1].strip()
+                        current_values['hex_ident'] = columns[4].strip()
+                        current_values['generated_date'] = columns[6].strip()
+                        current_values['generated_time'] = columns[7].strip()
+                        current_values['logged_date'] = columns[8].strip()
+                        current_values['logged_time'] = columns[9].strip()
 
                         # See if we have cached values for this hex_ident
                         old_values = {}
@@ -213,77 +213,77 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                             if value_cache[current_values['hex_ident']]['time'] > cache_timeout:
                                 old_values = value_cache[current_values['hex_ident']]['cached']
 
-                        if columns[2]:
+                        if columns[2].strip():
                             current_values['session_id'] = int(columns[2])
                         else:
                             current_values['session_id'] = old_values.get('session_id', None)
 
-                        if columns[3]:
+                        if columns[3].strip():
                             current_values['aircraft_id'] = int(columns[3])
                         else:
                             current_values['aircraft_id'] = old_values.get('aircraft_id', None)
 
-                        if columns[5]:
+                        if columns[5].strip():
                             current_values['flight_id'] = int(columns[5])
                         else:
                             current_values['flight_id'] = old_values.get('flight_id', None)
 
-                        if columns[10]:
-                            current_values['call_sign'] = columns[10]
+                        if columns[10].strip():
+                            current_values['call_sign'] = columns[10].strip()
                         else:
                             current_values['call_sign'] = old_values.get('call_sign', None)
 
-                        if columns[11]:
+                        if columns[11].strip():
                             current_values['altitude'] = int(columns[11])
                         else:
                             current_values['altitude'] = old_values.get('altitude', None)
 
-                        if columns[12]:
+                        if columns[12].strip():
                             current_values['ground_speed'] = int(columns[12])
                         else:
                             current_values['ground_speed'] = old_values.get('ground_speed', None)
 
-                        if columns[13]:
+                        if columns[13].strip():
                             current_values['track'] = int(columns[13])
                         else:
                             current_values['track'] = old_values.get('track', None)
 
-                        if columns[14]:
+                        if columns[14].strip():
                             current_values['lat'] = float(columns[14])
                         else:
                             current_values['lat'] = old_values.get('lat', None)
 
-                        if columns[15]:
+                        if columns[15].strip():
                             current_values['lon'] = float(columns[15])
                         else:
                             current_values['lon'] = old_values.get('lon', None)
 
-                        if columns[16]:
+                        if columns[16].strip():
                             current_values['vertical_rate'] = float(columns[16])
                         else:
                             current_values['vertical_rate'] = old_values.get('vertical_rate', None)
 
-                        if columns[17]:
+                        if columns[17].strip():
                             current_values['squawk'] = int(columns[17])
                         else:
                             current_values['squawk'] = old_values.get('squawk', None)
 
-                        if columns[18]:
+                        if columns[18].strip():
                             current_values['alert'] = int(columns[18])
                         else:
                             current_values['alert'] = old_values.get('alert', None)
 
-                        if columns[19]:
+                        if columns[19].strip():
                             current_values['emergency'] = int(columns[19])
                         else:
                             current_values['emergency'] = old_values.get('emergency', None)
 
-                        if columns[20]:
+                        if columns[20].strip():
                             current_values['spi'] = int(columns[20])
                         else:
                             current_values['spi'] = old_values.get('spi', None)
 
-                        if columns[21]:
+                        if columns[21].strip():
                             current_values['is_on_ground'] = int(columns[21])
                         else:
                             current_values['is_on_ground'] = old_values.get('is_on_ground', None)
@@ -305,8 +305,12 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                     if len(columns[14].strip()) == 0:
                         continue
 
+                    # Only proceed if call sign is known
+                    if current_values['call_sign'] is None:
+                        continue
+
                     # Get current time
-                    parse_time = time.time()
+                    parsed_timestamp = time.time()
 
                     # check if aircraft is within search region
                     aircraft_id_str = "{}/{}".format(current_values['call_sign'], current_values['hex_ident'])
@@ -340,13 +344,13 @@ INSERT INTO adsb_squitters
                               (current_values['message_type'], current_values['transmission_type'],
                                current_values['session_id'], current_values['aircraft_id'],
                                current_values['hex_ident'], current_values['flight_id'],
-                               current_values['generated_timestamp'], current_values['logged_timestamp'],
+                               generated_timestamp, logged_timestamp,
                                current_values['call_sign'], current_values['altitude'],
                                current_values['ground_speed'], current_values['track'],
                                current_values['lat'], current_values['lon'], current_values['vertical_rate'],
                                current_values['squawk'], current_values['alert'], current_values['emergency'],
                                current_values['spi'],
-                               current_values['is_on_ground'], current_values['parse_time'])
+                               current_values['is_on_ground'], parsed_timestamp)
                               )
 
                     # Increment squitter count

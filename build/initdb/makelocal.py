@@ -8,7 +8,7 @@ Configure website to use a local hostname by default.
 
 import argparse
 
-from dcford_helpers.connect_db import connect_db
+from adsb_helpers.connect_db import connect_db
 
 
 def make_local(suffix="local"):
@@ -30,7 +30,7 @@ def make_local(suffix="local"):
 
     # Insert data
     local_host = 'https://adsb.{suffix}/'.format(suffix=suffix)
-    c.execute("UPDATE dcford_constants SET value='{}' WHERE name='server';".format(local_host))
+    c.execute("UPDATE adsb_constants SET value='{}' WHERE name='server';".format(local_host))
 
     # Commit changes
     db.commit()

@@ -47,7 +47,7 @@ $period = 24 * 3600;
 $byday = [];
 
 // Fetch observatory activity history
-function get_activity_history($count, $suffix, $url)
+function get_activity_history($count_by, $suffix, $url)
 {
     global $byday, $const, $tmin, $period, $days_in_month, $year, $month;
     $count = 0;
@@ -56,7 +56,7 @@ function get_activity_history($count, $suffix, $url)
         $b = $a + $period;
         $count++;
         $stmt = $const->db->prepare("
-SELECT COUNT({$count}) AS result_count FROM adsb_squitters s
+SELECT COUNT({$count_by}) AS result_count FROM adsb_squitters s
 WHERE s.generated_timestamp BETWEEN :x AND :y;");
         $stmt->bindParam(':x', $x, PDO::PARAM_STR, 64);
         $stmt->bindParam(':y', $y, PDO::PARAM_STR, 64);
@@ -73,7 +73,7 @@ WHERE s.generated_timestamp BETWEEN :x AND :y;");
     }
 }
 
-get_activity_history("DISTINCT callsign, hex_ident", " aircraft", "aircraft.php");
+get_activity_history("DISTINCT call_sign, hex_ident", " aircraft", "aircraft.php");
 get_activity_history("*", " squitters", "squitters.php");
 
 $pageInfo = [

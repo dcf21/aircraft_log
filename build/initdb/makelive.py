@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # makelive.py
 
-from dcford_helpers.connect_db import connect_db
+from adsb_helpers.connect_db import connect_db
 
 
 def make_live():
@@ -17,7 +17,7 @@ def make_live():
     [db, c] = connect_db()
 
     # Insert data
-    c.execute("UPDATE dcford_constants SET value='https://adsb.rpi/' WHERE name='server';")
+    c.execute("UPDATE adsb_constants SET value='https://adsb.rpi/' WHERE name='server';")
 
     # Commit changes
     db.commit()

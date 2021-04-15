@@ -12,7 +12,7 @@ $tmin = $getargs->readTime('year', 'month', 'day', null, null, null, $const->yea
 $call_sign = "";
 $hex_ident = "";
 if (array_key_exists("call_sign", $_GET) && is_string($_GET["call_sign"])) $call_sign = $_GET["call_sign"];
-if (array_key_exists("hex_ident", $_GET) && is_string($_GET["hex_ident"])) $call_sign = $_GET["hex_ident"];
+if (array_key_exists("hex_ident", $_GET) && is_string($_GET["hex_ident"])) $hex_ident = $_GET["hex_ident"];
 $aircraft_string = htmlentities($call_sign) . "/" . htmlentities($hex_ident);
 
 $date_string = date("d M Y", $tmin['utc'] + 0.1);
@@ -26,7 +26,7 @@ function get_activity_history($tmin, $call_sign, $hex_ident)
     $stmt = $const->db->prepare("
 SELECT * FROM adsb_squitters s
 WHERE s.generated_timestamp BETWEEN :x AND :y
-    AND s.callsign=:c AND s.hex_ident=:h
+    AND s.call_sign=:c AND s.hex_ident=:h
 ORDER BY s.generated_timestamp;");
     $stmt->bindParam(':x', $x, PDO::PARAM_STR, 64);
     $stmt->bindParam(':y', $y, PDO::PARAM_STR, 64);
