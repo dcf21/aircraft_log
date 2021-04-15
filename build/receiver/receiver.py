@@ -372,6 +372,7 @@ INSERT INTO adsb_squitters
 
                     # Increment squitter count
                     count_committed += 1
+                    text_buffer = ""
                 else:
                     # The stream message is too short, so prepend it to the next stream message
                     text_buffer = squitter
