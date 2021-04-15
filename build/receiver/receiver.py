@@ -302,6 +302,11 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                         'time': time.time()
                     }
 
+                    # Reject illegal message type
+                    if current_values['message_type'] != "MSG":
+                        logging.warning("Received illegal message type <{}>".format(current_values['message_type']))
+                        logging.warning("Input line was: {}".format(squitter))
+
                     # Count messages parsed
                     # logging.info(squitter.strip())
                     count_total += 1

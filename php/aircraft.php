@@ -14,10 +14,11 @@ $date_string = date("d M Y", $tmin['utc'] + 0.1);
 function get_activity_history($tmin)
 {
     global $const;
-    $a = floor(($tmin['utc'] + 0.1) / 86400) * 86400;
+    $a = floor(($tmin['utc'] + 0.1) / 86400) * 86400 + 43200;
     $b = $a + 86400;
     $stmt = $const->db->prepare("
-SELECT call_sign, hex_ident, MIN(generated_timestamp) AS t_min, MAX(generated_timestamp) AS t_max
+SELECT call_sign, hex_ident, MIN(generated_timestamp) AS t_min, MAX(generated_timestamp) AS t_max,
+       COUNT(*) AS squitter_count
 FROM adsb_squitters s
 WHERE s.generated_timestamp BETWEEN :x AND :y
 GROUP BY call_sign, hex_ident
@@ -56,6 +57,7 @@ $pageTemplate->header($pageInfo);
                 <td>Hex ident</td>
                 <td>First seen</td>
                 <td>Last seen</td>
+                <td>Position fixes</td>
             </tr>
             </thead>
             <tbody>
@@ -71,6 +73,7 @@ $pageTemplate->header($pageInfo);
                     <td><a href="<?php echo $aircraft_url; ?>"><?php echo $item['hex_ident']; ?></a></td>
                     <td><?php echo date("H:i:s", $item['t_min']); ?></td>
                     <td><?php echo date("H:i:s", $item['t_max']); ?></td>
+                    <td style="text-align: right;"><?php echo $item['squitter_count']; ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

@@ -14,7 +14,7 @@ $date_string = date("d M Y", $tmin['utc'] + 0.1);
 function get_activity_history($tmin)
 {
     global $const;
-    $a = floor(($tmin['utc'] + 0.1) / 86400) * 86400;
+    $a = floor(($tmin['utc'] + 0.1) / 86400) * 86400 + 43200;
     $b = $a + 86400;
     $stmt = $const->db->prepare("
 SELECT * FROM adsb_squitters s
