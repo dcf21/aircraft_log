@@ -169,19 +169,18 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                 while not message_bytes.decode('utf-8').endswith('\n'):
                     message_bytes += input_socket.recv(1)
             except socket.error:
-                # This happens if there is no connection and is dealt with below
-                message_bytes = bytearray()
-                pass
-
-            # If we didn't get a stream message, reconnect
-            squitter = message_bytes.decode('utf-8').strip()
-            if len(squitter) == 0:
-                logging.info("No broadcast received. Attempting to reconnect")
+                # This happens if there is no connection
+                logging.info("Connection dropped. Attempting to reconnect")
                 time.sleep(connect_attempt_delay)
                 input_socket.close()
                 input_socket = open_socket(host=host, port=port,
                                            connect_attempt_limit=connect_attempt_limit,
                                            connect_attempt_delay=connect_attempt_delay)
+                continue
+
+            # If we didn't get a stream message, reconnect
+            squitter = message_bytes.decode('utf-8').strip()
+            if len(squitter) == 0:
                 continue
 
             # Break squitter up into comma-separated components
