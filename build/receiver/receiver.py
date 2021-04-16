@@ -160,7 +160,7 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                 committed_at_last_report = count_committed
 
                 # Touch database connection to prevent timeout
-                c.execute("SELECT 1 FROM adsb_squitters LIMIT 1;");
+                c.execute("SELECT 1 FROM adsb_squitters LIMIT 1;")
                 results = c.fetchall()
 
             # Receive a single line from the input stream
@@ -170,6 +170,7 @@ def listen_for_squitters(host: str = "localhost", port: int = 30003,
                     message_bytes += input_socket.recv(1)
             except socket.error:
                 # This happens if there is no connection and is dealt with below
+                message_bytes = bytearray()
                 pass
 
             # If we didn't get a stream message, reconnect
