@@ -22,7 +22,7 @@ SELECT call_sign, hex_ident, MIN(generated_timestamp) AS t_min, MAX(generated_ti
 FROM adsb_squitters s
 WHERE s.generated_timestamp BETWEEN :x AND :y
 GROUP BY call_sign, hex_ident
-ORDER BY s.generated_timestamp;");
+ORDER BY MIN(generated_timestamp);");
     $stmt->bindParam(':x', $x, PDO::PARAM_STR, 64);
     $stmt->bindParam(':y', $y, PDO::PARAM_STR, 64);
     $stmt->execute(['x' => $a, 'y' => $b]);

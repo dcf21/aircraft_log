@@ -66,11 +66,10 @@ foreach ($postbreadcrumb as $c) {
 
     public static function header($pageInfo)
     {
-        global $const, $loc;
+        global $const;
         if (!isset($pageInfo["breadcrumb"])) $pageInfo["breadcrumb"] = [];
         if (!isset($pageInfo["postbreadcrumb"])) $pageInfo["postbreadcrumb"] = null;
         $server = $const->server;
-        $server_json = $const->server_json;
         $sitename = $const->sitename;
 
         header("Content-Security-Policy: frame-ancestors 'none'");
@@ -165,7 +164,6 @@ __HTML__;
 
             <script type="text/javascript">
                 window.server = "<?php echo $server; ?>";
-                window.serverjson = "<?php echo $server_json; ?>";
             </script>
 
             <script type="text/javascript" src="<?php echo $server; ?>js/dcford.min.js"></script>
