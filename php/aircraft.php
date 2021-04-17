@@ -35,7 +35,7 @@ function get_aircraft_info($hex_ident)
 {
     global $const;
     $stmt = $const->db->prepare("
-SELECT a.manufacturername AS manufacturer, a.model AS model, a.owner AS operator
+SELECT a.manufacturername AS manufacturer, a.model AS model, a.owner AS owner, a.operator AS operator
 FROM aircraft_hex_codes a
 WHERE a.hex_ident=:h;");
     $stmt->bindParam(':h', $h, PDO::PARAM_STR, 64);
@@ -45,14 +45,16 @@ WHERE a.hex_ident=:h;");
     $output = [
         'manufacturer' => '',
         'model' => '',
-        'operator' => ''
+        'operator' => '',
+        'owner' => ''
     ];
 
     if (count($items) > 0) {
         $output = [
             'manufacturer' => $items[0]['manufacturer'],
             'model' => $items[0]['model'],
-            'operator' => $items[0]['operator']
+            'operator' => $items[0]['operator'],
+            'owner' => $items[0]['owner']
         ];
 
     }
@@ -113,7 +115,7 @@ $pageTemplate->header($pageInfo);
                     <td><?php echo date("H:i:s", $item['t_min']); ?></td>
                     <td><?php echo date("H:i:s", $item['t_max']); ?></td>
                     <td style="text-align: right;"><?php echo $item['squitter_count']; ?></td>
-                    <td><?php echo $extras['operator']; ?></td>
+                    <td><?php echo $extras['operator'] ? $extras['operator'] : $extras['owner']; ?></td>
                     <td><?php echo $extras['manufacturer']; ?></td>
                     <td><?php echo $extras['model']; ?></td>
                 </tr>
