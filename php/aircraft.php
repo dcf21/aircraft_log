@@ -35,7 +35,7 @@ function get_aircraft_info($hex_ident)
 {
     global $const;
     $stmt = $const->db->prepare("
-SELECT a.manufacturername AS manufacturer, a.model AS model, a.operator AS operator
+SELECT a.manufacturername AS manufacturer, a.model AS model, a.owner AS operator
 FROM aircraft_hex_codes a
 WHERE a.hex_ident=:h;");
     $stmt->bindParam(':h', $h, PDO::PARAM_STR, 64);
