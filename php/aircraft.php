@@ -17,7 +17,7 @@ function get_activity_history($tmin)
     $a = floor(($tmin['utc'] + 0.1) / 86400) * 86400 + 43200;
     $b = $a + 86400;
     $stmt = $const->db->prepare("
-SELECT call_sign, hex_ident, MIN(generated_timestamp) AS t_min, MAX(generated_timestamp) AS t_max,
+SELECT s.call_sign, s.hex_ident, MIN(s.generated_timestamp) AS t_min, MAX(s.generated_timestamp) AS t_max,
        COUNT(*) AS squitter_count
 FROM adsb_squitters s
 WHERE s.generated_timestamp BETWEEN :x AND :y
@@ -30,14 +30,49 @@ ORDER BY MIN(generated_timestamp);");
     return $items;
 }
 
+// Get information about aircraft, by hex ident
+function get_aircraft_info($hex_ident)
+{
+    global $const;
+    $stmt = $const->db->prepare("
+SELECT a.manufacturername AS manufacturer, a.model AS model, a.operator AS operator
+FROM aircraft_hex_codes a
+WHERE a.hex_ident=:h;");
+    $stmt->bindParam(':h', $h, PDO::PARAM_STR, 64);
+    $stmt->execute(['h' => $hex_ident]);
+    $items = $stmt->fetchAll();
+
+    $output = [
+        'manufacturer' => '',
+        'model' => '',
+        'operator' => ''
+    ];
+
+    if (count($items) > 0) {
+        $output = [
+            'manufacturer' => $items[0]['manufacturer'],
+            'model' => $items[0]['model'],
+            'operator' => $items[0]['operator']
+        ];
+
+    }
+
+    return $output;
+}
+
 $items = get_activity_history($tmin);
+
+// Extra formatting
+$cssextra = <<<__HTML__
+td { max-width: 200px; vertical-align: middle; }
+__HTML__;
 
 $pageInfo = [
     "pageTitle" => "ADS-B database: Aircraft seen on {$date_string}",
     "pageDescription" => "ADS-B database: Aircraft seen on {$date_string}",
     "activeTab" => "about",
     "teaserImg" => null,
-    "cssextra" => null,
+    "cssextra" => $cssextra,
     "includes" => [],
     "linkRSS" => null,
     "options" => ["sideAdvert"]
@@ -58,11 +93,15 @@ $pageTemplate->header($pageInfo);
                 <td>First seen</td>
                 <td>Last seen</td>
                 <td>Position fixes</td>
+                <td>Operator</td>
+                <td>Manufacturer</td>
+                <td>Model</td>
             </tr>
             </thead>
             <tbody>
             <?php
             foreach ($items as $item):
+                $extras = get_aircraft_info($item['hex_ident']);
                 $aircraft_url = "aircraft_squitters.php?" .
                     "year={$tmin['year']}&month={$tmin['mc']}&day={$tmin['day']}" .
                     "&call_sign=" . htmlentities($item['call_sign']) .
@@ -74,6 +113,9 @@ $pageTemplate->header($pageInfo);
                     <td><?php echo date("H:i:s", $item['t_min']); ?></td>
                     <td><?php echo date("H:i:s", $item['t_max']); ?></td>
                     <td style="text-align: right;"><?php echo $item['squitter_count']; ?></td>
+                    <td><?php echo $extras['operator']; ?></td>
+                    <td><?php echo $extras['manufacturer']; ?></td>
+                    <td><?php echo $extras['model']; ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
