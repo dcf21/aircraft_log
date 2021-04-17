@@ -1,0 +1,33 @@
+# Table of aircraft data
+CREATE TABLE aircraft_hex_codes
+(
+    uid                 INTEGER PRIMARY KEY AUTO_INCREMENT,
+    hex_ident           VARCHAR(6),
+    registration        VARCHAR(20),
+    manufacturericao    VARCHAR(40),
+    manufacturername    VARCHAR(150),
+    model               VARCHAR(100),
+    typecode            VARCHAR(30),
+    serialnumber        VARCHAR(30),
+    linenumber          VARCHAR(20),
+    icaoaircrafttype    VARCHAR(20),
+    operator            VARCHAR(100),
+    operatorcallsign    VARCHAR(40),
+    operatoricao        VARCHAR(40),
+    operatoriata        VARCHAR(40),
+    owner               VARCHAR(200),
+    testreg             VARCHAR(100),
+    registered          VARCHAR(30),
+    reguntil            VARCHAR(100),
+    status              VARCHAR(100),
+    built               VARCHAR(30),
+    firstflightdate     VARCHAR(30),
+    seatconfiguration   VARCHAR(100),
+    engines             VARCHAR(400),
+    modes               VARCHAR(100),
+    adsb                VARCHAR(20),
+    acars               VARCHAR(20),
+    notes               VARCHAR(400),
+    categoryDescription VARCHAR(100),
+    INDEX (hex_ident)
+);
