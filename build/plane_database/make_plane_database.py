@@ -52,6 +52,12 @@ def init_plane_database():
             # Capitalise hex ident
             row[0] = row[0].upper()
 
+            # Truncate very long model strings
+            row[4] = str(row[4]).strip()
+            if len(row[4]) > 96:
+                logging.info("Truncating model string <{}>".format(row[4]))
+                row[4] = row[4][:96] + "..."
+
             # Insert
             c.execute("""
 INSERT INTO aircraft_hex_codes

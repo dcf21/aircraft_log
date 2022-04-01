@@ -16,6 +16,5 @@ pip install mysqlclient
 
 # Install custom python libraries
 cd ${cwd}
-cd build/lib/adsb_helpers
-python setup.py install
+pip install --editable build/lib/adsb_helpers --no-binary :all:
 
