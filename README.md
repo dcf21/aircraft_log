@@ -67,3 +67,7 @@ cd /home/pi/ads_b/build/receiver
 
 The Raspberry Pi should now be hosting a web interface on the virtual host <adsb.local>.
 
+## Author
+
+This code was developed by Dominic Ford <https://dcford.org.uk>. It is distributed under the Gnu General Public License V3.
+
