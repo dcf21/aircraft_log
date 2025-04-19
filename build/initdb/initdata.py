@@ -3,11 +3,13 @@
 
 import os
 
+import MySQLdb
+
 from adsb_helpers.connect_db import connect_db
 from adsb_helpers.vendor import xmltodict
 
 
-def init_data():
+def init_data() -> None:
     """
     Read default data from the file <initdata.xml> and populate it into the database.
 
@@ -16,12 +18,15 @@ def init_data():
     """
 
     # Read source data
-    pwd = os.getcwd()
-    xml_file = open(os.path.join(pwd, "initdata.xml"), "rb")
-    xml = xmltodict.parse(xml_file)
+    pwd: str = os.getcwd()
+    with open(os.path.join(pwd, "initdata.xml"), "rb") as xml_file:
+        xml = xmltodict.parse(xml_file)
 
     # Open database
-    [db, c] = connect_db()
+    db: MySQLdb.connections.Connection
+    c: MySQLdb.cursors.DictCursor
+    db, c = connect_db()
+
     c.execute("BEGIN;")
 
     # Populate table of constants
@@ -29,7 +34,8 @@ def init_data():
         c.execute("INSERT INTO adsb_constants VALUES (DEFAULT, %s, %s);", (const['name'], const['value']))
         if const['name'] == 'copyright':
             os.system("mkdir -p ../../auto/tmp/settings")
-            open("../../auto/tmp/settings/copyright", "w").write(const["value"])
+            with open("../../auto/tmp/settings/copyright", "w") as f_out:
+                f_out.write(const["value"])
 
     # Image formats
     for item in xml['data']['imgFormats']['format']:

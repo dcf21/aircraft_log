@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 # makelive.py
 
+import MySQLdb
+
 from adsb_helpers.connect_db import connect_db
 
 
-def make_live():
+def make_live() -> None:
     """
     Set website to use live hostname for URLs.
 
@@ -14,7 +16,9 @@ def make_live():
     """
 
     # Open database
-    [db, c] = connect_db()
+    db: MySQLdb.connections.Connection
+    c: MySQLdb.cursors.DictCursor
+    db, c = connect_db()
 
     # Insert data
     c.execute("UPDATE adsb_constants SET value='https://adsb.rpi/' WHERE name='server';")

@@ -2,14 +2,14 @@
 # php_preprocess.py
 
 import os
-import shutil
 import logging
+import shutil
 
 
-def php_preprocess(filename, in_file, out_file):
+def php_preprocess(filename: str, in_file: str, out_file: str) -> None:
     """
     Hook to apply pre-processing to PHP files when they are copied from the source code directory to the live
-    web space.
+    webspace.
 
     :param filename:
         The filename (excluding path) of the source PHP file
