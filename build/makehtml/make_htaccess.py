@@ -18,7 +18,7 @@ def make_htaccess(dir_path, server):
 
     out = open(os.path.join(dir_path, ".htaccess"), "w")
 
-    # If hostname uses https, then redirect http requests to http
+    # If hostname uses https, then redirect http requests to https
     if server.startswith("https"):
         force_https = """
 RewriteCond %{HTTPS} !=on
